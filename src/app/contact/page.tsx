@@ -11,58 +11,38 @@ import {
   Alert,
 } from '@mui/material'
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { contactFormSchema, type ContactForm } from '@/schemas/validationSchemas'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 
 const ContactPage = () => {
-  const [formData, setFormData] = useState<ContactForm>({
-    name: '',
-    email: '',
-    subject: '',
-    message: '',
-    phone: '',
-  })
-
-  const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitted, setSubmitted] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<ContactForm>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      subject: '',
+      message: '',
+      phone: '',
+    },
+  })
 
-    try {
-      contactFormSchema.parse(formData)
-      setErrors({})
-      setSubmitted(true)
-      setTimeout(() => setSubmitted(false), 5000)
-      // Here you would send the data to your API
-      console.log('Form submitted:', formData)
-
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: '',
-        phone: '',
-      })
-    } catch (error: any) {
-      const validationErrors: Record<string, string> = {}
-      error.errors?.forEach((err: any) => {
-        validationErrors[err.path[0]] = err.message
-      })
-      setErrors(validationErrors)
-    }
+  const onSubmit = (data: ContactForm) => {
+    setSubmitted(true)
+    setTimeout(() => setSubmitted(false), 5000)
+    // Here you would send the data to your API
+    console.log('Form submitted:', data)
+    reset()
   }
-
-  const handleChange =
-    (field: keyof ContactForm) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setFormData({ ...formData, [field]: e.target.value })
-      if (errors[field]) {
-        setErrors({ ...errors, [field]: '' })
-      }
-    }
 
   return (
     <ProtectedRoute>
@@ -80,14 +60,13 @@ const ContactPage = () => {
 
           <Card>
             <CardContent>
-              <Box component="form" onSubmit={handleSubmit} className="space-y-4">
+              <Box component="form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <TextField
                   fullWidth
                   label="Name"
-                  value={formData.name}
-                  onChange={handleChange('name')}
+                  {...register('name')}
                   error={!!errors.name}
-                  helperText={errors.name}
+                  helperText={errors.name?.message}
                   required
                   margin="normal"
                 />
@@ -96,10 +75,9 @@ const ContactPage = () => {
                   fullWidth
                   label="Email"
                   type="email"
-                  value={formData.email}
-                  onChange={handleChange('email')}
+                  {...register('email')}
                   error={!!errors.email}
-                  helperText={errors.email}
+                  helperText={errors.email?.message}
                   required
                   margin="normal"
                 />
@@ -107,20 +85,18 @@ const ContactPage = () => {
                 <TextField
                   fullWidth
                   label="Phone (Optional)"
-                  value={formData.phone}
-                  onChange={handleChange('phone')}
+                  {...register('phone')}
                   error={!!errors.phone}
-                  helperText={errors.phone}
+                  helperText={errors.phone?.message}
                   margin="normal"
                 />
 
                 <TextField
                   fullWidth
                   label="Subject"
-                  value={formData.subject}
-                  onChange={handleChange('subject')}
+                  {...register('subject')}
                   error={!!errors.subject}
-                  helperText={errors.subject}
+                  helperText={errors.subject?.message}
                   required
                   margin="normal"
                 />
@@ -130,10 +106,9 @@ const ContactPage = () => {
                   label="Message"
                   multiline
                   rows={6}
-                  value={formData.message}
-                  onChange={handleChange('message')}
+                  {...register('message')}
                   error={!!errors.message}
-                  helperText={errors.message}
+                  helperText={errors.message?.message}
                   required
                   margin="normal"
                 />
